@@ -1039,8 +1039,7 @@ def executeTests(os, edition, maintainer, mode, engine, stageName) {
     def testIndex = 0
     def tests = getTests(os, edition, maintainer, mode, engine)
 
-    def concurrency = 2
-
+    def concurrency = 4
     if (os == 'linux') {
         concurrency = 8
     }
