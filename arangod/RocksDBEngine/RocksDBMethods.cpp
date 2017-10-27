@@ -181,6 +181,7 @@ arangodb::Result RocksDBTrxMethods::Get(rocksdb::ColumnFamilyHandle* cf,
   rocksdb::ReadOptions const& ro = _state->_rocksReadOptions;
   TRI_ASSERT(ro.snapshot != nullptr);
   rocksdb::Status s = _state->_rocksTransaction->Get(ro, cf, key, val);
+  if(!s.ok()){ LOG_TOPIC(ERR, Logger::FIXME) << " ##geo get    ## " << key.ToString(true); }
   return s.ok() ? arangodb::Result() : rocksutils::convertStatus(s);
 }
 

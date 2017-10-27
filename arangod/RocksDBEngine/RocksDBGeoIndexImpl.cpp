@@ -358,23 +358,28 @@ inline void RocksWrite(RocksDBMethods* rocksMethods, RocksDBKey const& key,
         db->Put(wo, RocksDBColumnFamily::geo(), key.string(), slice);
     if (!s.ok()) {
       arangodb::Result r = rocksutils::convertStatus(s, rocksutils::index);
+      LOG_TOPIC(ERR, Logger::FIXME) << " ##geo write  ## " << key.string().ToString(true) << " FAILED - no methods";
       THROW_ARANGO_EXCEPTION_MESSAGE(r.errorNumber(), r.errorMessage());
     }
   } else {
     arangodb::Result r = rocksMethods->Put(RocksDBColumnFamily::geo(), key,
                                            slice, rocksutils::index);
     if (!r.ok()) {
+      LOG_TOPIC(ERR, Logger::FIXME) << " ##geo write  ## " << key.string().ToString(true) << " FAILED - with methods";
       THROW_ARANGO_EXCEPTION_MESSAGE(r.errorNumber(), r.errorMessage());
     }
   }
+  LOG_TOPIC(ERR, Logger::FIXME) << " ##geo write  ## " << key.string().ToString(true);
 }
 
 inline void RocksDelete(RocksDBMethods* rocksMethods, RocksDBKey const& key) {
   arangodb::Result r =
       rocksMethods->Delete(RocksDBColumnFamily::geo(), key);
   if (!r.ok()) {
+    LOG_TOPIC(ERR, Logger::FIXME) << " ##geo delete ## " << key.string().ToString(true) << " FAILED";
     THROW_ARANGO_EXCEPTION_MESSAGE(r.errorNumber(), r.errorMessage());
   }
+  LOG_TOPIC(ERR, Logger::FIXME) << " ##geo delete ## " << key.string().ToString(true);
 }
 
 void SlotRead(GeoIx const* gix, RocksDBMethods* rocksMethods, int slot, GeoCoordinate* gc /*out param*/) {
