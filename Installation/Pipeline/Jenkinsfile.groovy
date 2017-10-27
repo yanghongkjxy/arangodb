@@ -1043,6 +1043,8 @@ def executeTests(os, edition, maintainer, mode, engine, stageName) {
 
     if (os == 'linux') {
         concurrency = 8
+    } else if (os == 'windows') {
+        concurrency = 8
     }
 
     node(testJenkins[os]) {
