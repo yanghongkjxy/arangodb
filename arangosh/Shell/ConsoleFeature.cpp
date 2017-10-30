@@ -31,6 +31,7 @@
 #include "ProgramOptions/Section.h"
 #include "Shell/ClientFeature.h"
 
+#include <iomanip>
 #include <iostream>
 
 using namespace arangodb;
@@ -416,6 +417,14 @@ ConsoleFeature::Prompt ConsoleFeature::buildPrompt(ClientFeature* client) {
     if (esc) {
       if (c == '%') {
         result.push_back(c);
+      } else if (c == 't') {
+        std::ostringstream tmp;
+        tmp << std::setprecision(6) << std::fixed << TRI_microtime();
+        result.append(tmp.str());
+      } else if (c == 'p') {
+        std::ostringstream tmp;
+        tmp << std::setprecision(6) << std::fixed << _lastDuration;
+        result.append(tmp.str());
       } else if (c == 'd') {
         if (client != nullptr) {
           result.append(client->databaseName());

@@ -78,6 +78,7 @@ class ConsoleFeature final : public application_features::ApplicationFeature {
   void closeLog();
   void log(std::string const&);
   void flushLog();
+  void setLastDuration(double duration) { _lastDuration = duration; }
 
   struct Prompt {
     std::string _plain;
@@ -106,6 +107,7 @@ class ConsoleFeature final : public application_features::ApplicationFeature {
   bool _supportsColors;
   FILE* _toPager;
   FILE* _toAuditFile;
+  double _lastDuration;
 };
 }
 
