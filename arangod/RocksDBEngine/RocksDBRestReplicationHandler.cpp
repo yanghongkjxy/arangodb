@@ -592,7 +592,7 @@ void RocksDBRestReplicationHandler::handleCommandFetchKeys() {
   
   if (keys) {
     Result rv = ctx->dumpKeys(builder, chunk, static_cast<size_t>(chunkSize), lowKey);
-    if (rv.fail()){
+    if (rv.fail()) {
       generateError(rv);
       return;
     }
