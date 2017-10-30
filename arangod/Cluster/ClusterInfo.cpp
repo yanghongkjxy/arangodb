@@ -537,7 +537,7 @@ void ClusterInfo::loadPlan() {
                 }
               } else {
                 newCollection = std::make_shared<LogicalCollection>(
-                    vocbase, collectionSlice);
+                    vocbase, collectionSlice, true);
               }
 #endif
               newCollection->setPlanVersion(newPlanVersion);
