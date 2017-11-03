@@ -63,12 +63,15 @@ SocketTask::SocketTask(arangodb::EventLoop loop,
       _closeRequested(false),
       _abandoned(false),
       _closedSend(false),
-      _closedReceive(false) {
+      _closedReceive(false),
+      _strand(_peer->_ioService) {
   _connectionStatistics = ConnectionStatistics::acquire();
   ConnectionStatistics::SET_START(_connectionStatistics);
 
   if (!skipInit) {
     _peer->setNonBlocking(true);
+    // We do not want to have a strand here,
+    // no concurrency at this point
     if (!_peer->handshake()) {
       _closedSend = true;
       _closedReceive = true;
@@ -94,6 +97,7 @@ SocketTask::~SocketTask() {
   }
 
   if (_peer) {
+    // Can we still use strand here? Do we have to?
     _peer->close(err);
   }
 
@@ -127,7 +131,11 @@ void SocketTask::start() {
       << _connectionInfo.clientPort;
 
   auto self = shared_from_this();
-  _loop._scheduler->post([self, this]() { asyncReadSome(); });
+  _loop._scheduler->post([self, this]() {
+    _strand.post([self, this]() {
+      asyncReadSome();
+    });
+  });
 }
 
 // -----------------------------------------------------------------------------
@@ -175,6 +183,7 @@ void SocketTask::writeWriteBuffer() {
   size_t total = _writeBuffer._buffer->length();
   size_t written = 0;
 
+  /*
   if (!_peer->isEncrypted()) {
     boost::system::error_code err;
     err.clear();
@@ -212,13 +221,14 @@ void SocketTask::writeWriteBuffer() {
       return;
     }
   }
+  */
 
   // so the code could have blocked at this point or not all data
   // was written in one go, begin writing at offset (written)
   auto self = shared_from_this();
   _peer->asyncWrite(boost::asio::buffer(_writeBuffer._buffer->begin() + written,
                                         total - written),
-                    [self, this](const boost::system::error_code& ec,
+                    _strand.wrap([self, this](const boost::system::error_code& ec,
                                  std::size_t transferred) {
                       MUTEX_LOCKER(locker, _lock);
 
@@ -235,13 +245,14 @@ void SocketTask::writeWriteBuffer() {
                         closeStreamNoLock();
                       } else {
                         if (completedWriteBuffer()) {
+                          // This is async so we leave the strand here
                           _loop._scheduler->post([self, this]() {
                             MUTEX_LOCKER(locker, _lock);
                             writeWriteBuffer();
                           });
                         }
                       }
-                    });
+                    }));
 }
 
 
@@ -487,11 +498,13 @@ bool SocketTask::processAll() {
 // will acquire the _lock
 void SocketTask::asyncReadSome() {
   MUTEX_LOCKER(locker, _lock);
+  TRI_ASSERT(_strand.running_in_this_thread());
     
   if (_abandoned) {
     return;
   }
 
+  /*
   if (!_peer->isEncrypted()) {
     try {
       size_t const MAX_DIRECT_TRIES = 2;
@@ -523,6 +536,7 @@ void SocketTask::asyncReadSome() {
       return;
     }
   }
+  */
 
   // try to read more bytes
   if (!_abandoned) {
@@ -558,7 +572,11 @@ void SocketTask::asyncReadSome() {
             _readBuffer.increaseLength(transferred);
 
             if (processAll()) {
-              _loop._scheduler->post([self, this]() { asyncReadSome(); });
+              _loop._scheduler->post([self, this]() {
+                  _strand.post([self, this]() {
+                    asyncReadSome();
+                  });
+              });
             }
 
             compactify();

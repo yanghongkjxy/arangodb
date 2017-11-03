@@ -190,6 +190,9 @@ class SocketTask : virtual public Task {
   bool _abandoned;
   bool _closedSend;
   bool _closedReceive;
+
+  // Strand to protect the async access to file descriptors in boost
+  boost::asio::io_service::strand _strand;
 };
 }
 }
